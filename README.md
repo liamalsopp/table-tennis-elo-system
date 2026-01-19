@@ -4,7 +4,7 @@ A full-featured React application for tracking ELO ratings in a table tennis lea
 
 ## Features
 
-- **Player Management**: Add players to the league with starting ELO of 1500
+- **Player Management**: Add players to the league with starting ELO of 1000
 - **Match Recording**: Record match results with scores for each player
 - **Real-time ELO Updates**: ELO ratings automatically recalculate after each match
 - **Leaderboard**: View players ranked by ELO with win/loss statistics
@@ -53,7 +53,7 @@ npm run dev
 1. Navigate to the "👤 Add Player" tab
 2. Enter a player name
 3. Click "Add Player"
-4. New players start with an ELO rating of 1500
+4. New players start with an ELO rating of 1000
 
 ### Recording Matches
 
@@ -83,10 +83,13 @@ The "📊 History" tab displays:
 
 ## ELO Calculation
 
-The app uses the standard ELO rating system:
-- Starting ELO: 1500
-- K-factor: 32 (standard for most competitive play)
-- Formula: `New Rating = Old Rating + K × (Actual Score - Expected Score)`
+The app uses an advanced ELO rating system with:
+- Starting ELO: 1000
+- Performance-based rating changes (not just win/loss)
+- Margin of victory multiplier
+- Provisional ratings (K=40 for <10 games, K=24 for established)
+- Rust factor for inactive players
+- Close loss bonus (underdogs can gain rating on close losses)
 
 Expected score is calculated using:
 ```
@@ -182,6 +185,39 @@ The backend provides REST API endpoints:
 
 You can set the API URL using an environment variable:
 - `VITE_API_URL` - Defaults to `http://localhost:3001/api` if not set
+
+## Docker Deployment
+
+### Local Testing
+
+Build and run with Docker:
+
+```bash
+# Build the image
+docker build -t table-tennis-elo:latest .
+
+# Run the container
+docker run -p 8080:8080 table-tennis-elo:latest
+```
+
+Or use docker-compose:
+
+```bash
+docker-compose up --build
+```
+
+Visit http://localhost:8080
+
+### Azure App Service Deployment
+
+See [azure-deploy.md](./azure-deploy.md) for detailed deployment instructions to Azure App Services on the free plan.
+
+Quick steps:
+1. Build Docker image
+2. Push to Azure Container Registry
+3. Create Azure App Service
+4. Configure persistent storage for database
+5. Deploy!
 
 ## License
 
