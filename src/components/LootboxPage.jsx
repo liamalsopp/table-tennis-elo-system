@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Lootbox from './Lootbox';
 import AvatarSelector from './AvatarSelector';
@@ -6,7 +6,14 @@ import './LootboxPage.css';
 
 export default function LootboxPage() {
   const { players } = useApp();
-  const [selectedPlayerId, setSelectedPlayerId] = useState(players.length > 0 ? players[0].id : null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+
+  // Update selected player when players list changes
+  useEffect(() => {
+    if (players.length > 0 && (!selectedPlayerId || !players.find(p => p.id === selectedPlayerId))) {
+      setSelectedPlayerId(players[0].id);
+    }
+  }, [players, selectedPlayerId]);
 
   if (players.length === 0) {
     return (

@@ -13,9 +13,31 @@ export default function AvatarSelector({ playerId, onSelect }) {
   const API_BASE_URL = import.meta.env.VITE_API_URL || 
     (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
 
+export default function AvatarSelector({ playerId, onSelect }) {
+  const { refreshData, players } = useApp();
+  const [ownedAvatars, setOwnedAvatars] = useState([]);
+  const [currentAvatar, setCurrentAvatar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 
+    (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
+
+export default function AvatarSelector({ playerId, onSelect }) {
+  const { refreshData, players, refreshTrigger } = useApp();
+  const [ownedAvatars, setOwnedAvatars] = useState([]);
+  const [currentAvatar, setCurrentAvatar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 
+    (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
+
   useEffect(() => {
-    loadAvatars();
-  }, [playerId]);
+    if (playerId) {
+      loadAvatars();
+    }
+  }, [playerId, players, refreshTrigger]); // Refresh when playerId, players data, or refreshTrigger changes
 
   const loadAvatars = async () => {
     try {

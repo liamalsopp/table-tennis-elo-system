@@ -4,7 +4,7 @@ import Avatar from './Avatar';
 import './Lootbox.css';
 
 export default function Lootbox({ playerId, onOpen }) {
-  const { refreshData } = useApp();
+  const { refreshData, players, refreshTrigger } = useApp();
   const [lootboxes, setLootboxes] = useState(0);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -14,13 +14,24 @@ export default function Lootbox({ playerId, onOpen }) {
   const API_BASE_URL = import.meta.env.VITE_API_URL || 
     (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
 
-  // Load lootbox count
+  // Load lootbox count - refresh when playerId changes, players data updates, or refreshTrigger changes
   useEffect(() => {
-    fetch(`${API_BASE_URL}/avatars/lootbox/${playerId}`)
-      .then(res => res.json())
-      .then(data => setLootboxes(data.lootboxes || 0))
-      .catch(err => console.error('Error loading lootboxes:', err));
-  }, [playerId]);
+    if (!playerId) return;
+    
+    const loadLootboxes = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/avatars/lootbox/${playerId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLootboxes(data.lootboxes || 0);
+        }
+      } catch (err) {
+        console.error('Error loading lootboxes:', err);
+      }
+    };
+
+    loadLootboxes();
+  }, [playerId, players, refreshTrigger]);
 
   const openLootbox = async () => {
     if (lootboxes < 1 || loading || opening) return;

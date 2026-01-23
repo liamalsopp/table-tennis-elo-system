@@ -14,14 +14,17 @@ function App() {
   const { players, matches } = useApp();
 
   const tabs = [
-    { id: 'leaderboard', label: '🏆 Leaderboard', component: <Leaderboard /> },
-    { id: 'add-match', label: '➕ Add Match', component: <AddMatch /> },
-    { id: 'add-player', label: '👤 Add Player', component: <AddPlayer /> },
-    { id: 'lootbox', label: '🎁 Lootbox', component: <LootboxPage /> },
-    { id: 'prediction', label: '🔮 Prediction', component: <Prediction /> },
-    { id: 'stats', label: '📈 Stats', component: <PlayerStats /> },
-    { id: 'history', label: '📊 History', component: <MatchHistory /> },
+    { id: 'leaderboard', label: '🏆 Leaderboard', component: Leaderboard },
+    { id: 'add-match', label: '➕ Add Match', component: AddMatch },
+    { id: 'add-player', label: '👤 Add Player', component: AddPlayer },
+    { id: 'lootbox', label: '🎁 Lootbox', component: LootboxPage },
+    { id: 'prediction', label: '🔮 Prediction', component: Prediction },
+    { id: 'stats', label: '📈 Stats', component: PlayerStats },
+    { id: 'history', label: '📊 History', component: MatchHistory },
   ];
+
+  const ActiveTab = tabs.find((tab) => tab.id === activeTab);
+  const ActiveComponent = ActiveTab?.component;
 
   return (
     <div className="app">
@@ -52,9 +55,9 @@ function App() {
       </nav>
 
       <main className="main-content">
-        {tabs.find((tab) => tab.id === activeTab)?.component}
+        {ActiveComponent && <ActiveComponent key={activeTab} />}
       </main>
-      </div>
+    </div>
   );
 }
 

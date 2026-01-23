@@ -3,13 +3,13 @@ import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 
 export default function Leaderboard() {
-  const { players } = useApp();
+  const { players, refreshData, refreshTrigger } = useApp();
   const [playerAvatars, setPlayerAvatars] = useState({});
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 
     (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
 
-  // Load avatars for all players
+  // Load avatars for all players - refresh when players change or refreshTrigger changes
   useEffect(() => {
     const loadAvatars = async () => {
       const avatarPromises = players.map(async (player) => {
@@ -36,7 +36,7 @@ export default function Leaderboard() {
     if (players.length > 0) {
       loadAvatars();
     }
-  }, [players]);
+  }, [players, refreshTrigger]);
 
   if (players.length === 0) {
     return (

@@ -19,6 +19,7 @@ export function AppProvider({ children }) {
   const [players, setPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load data from API on mount
   useEffect(() => {
@@ -46,6 +47,9 @@ export function AppProvider({ children }) {
         const matchesData = await matchesRes.json();
         setMatches(matchesData);
       }
+      
+      // Increment refresh trigger to notify components
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error loading data:', error);
       console.error('API Base URL:', API_BASE_URL);
@@ -165,6 +169,7 @@ export function AppProvider({ children }) {
     players: [...players].sort((a, b) => b.elo - a.elo), // Sort by ELO descending
     matches,
     loading,
+    refreshTrigger, // Components can watch this to know when to refresh
     addPlayer,
     addMatch,
     deletePlayer,
