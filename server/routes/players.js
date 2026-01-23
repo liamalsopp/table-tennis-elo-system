@@ -17,7 +17,9 @@ router.get('/', async (req, res) => {
         matches_played as "matchesPlayed",
         last_played as "lastPlayed",
         rust_accumulated as "rustAccumulated",
-        created_at as "createdAt"
+        created_at as "createdAt",
+        lootboxes,
+        current_avatar_id as "currentAvatarId"
       FROM players
       ORDER BY elo DESC
     `);
@@ -48,8 +50,8 @@ router.post('/', async (req, res) => {
     const createdAt = new Date().toISOString();
 
     await db.query(
-      `INSERT INTO players (id, name, elo, wins, losses, matches_played, last_played, rust_accumulated, created_at)
-       VALUES ($1, $2, 1000.0, 0, 0, 0, NULL, 1.0, $3)`,
+      `INSERT INTO players (id, name, elo, wins, losses, matches_played, last_played, rust_accumulated, created_at, lootboxes)
+       VALUES ($1, $2, 1000.0, 0, 0, 0, NULL, 1.0, $3, 0)`,
       [id, name.trim(), createdAt]
     );
 
@@ -63,7 +65,9 @@ router.post('/', async (req, res) => {
         matches_played as "matchesPlayed",
         last_played as "lastPlayed",
         rust_accumulated as "rustAccumulated",
-        created_at as "createdAt"
+        created_at as "createdAt",
+        lootboxes,
+        current_avatar_id as "currentAvatarId"
       FROM players
       WHERE id = $1
     `, [id]);

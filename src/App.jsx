@@ -6,6 +6,7 @@ import Leaderboard from './components/Leaderboard';
 import MatchHistory from './components/MatchHistory';
 import Prediction from './components/Prediction';
 import PlayerStats from './components/PlayerStats';
+import LootboxPage from './components/LootboxPage';
 import { useApp } from './context/AppContext';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
     { id: 'leaderboard', label: '🏆 Leaderboard', component: <Leaderboard /> },
     { id: 'add-match', label: '➕ Add Match', component: <AddMatch /> },
     { id: 'add-player', label: '👤 Add Player', component: <AddPlayer /> },
+    { id: 'lootbox', label: '🎁 Lootbox', component: <LootboxPage /> },
     { id: 'prediction', label: '🔮 Prediction', component: <Prediction /> },
     { id: 'stats', label: '📈 Stats', component: <PlayerStats /> },
     { id: 'history', label: '📊 History', component: <MatchHistory /> },

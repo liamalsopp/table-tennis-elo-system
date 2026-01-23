@@ -6,6 +6,7 @@ import { webcrypto } from 'crypto';
 import { initDatabase } from './db.js';
 import playersRouter from './routes/players.js';
 import matchesRouter from './routes/matches.js';
+import avatarsRouter from './routes/avatars.js';
 
 // Ensure crypto is available globally for Azure SDK (required for @azure/storage-blob)
 if (typeof globalThis.crypto === 'undefined') {
@@ -48,6 +49,7 @@ async function startServer() {
   // API Routes
   app.use('/api/players', playersRouter);
   app.use('/api/matches', matchesRouter);
+  app.use('/api/avatars', avatarsRouter);
 
   // Health check
   app.get('/api/health', (req, res) => {

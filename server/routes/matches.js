@@ -111,7 +111,8 @@ router.post('/', async (req, res) => {
            wins = wins + 1,
            matches_played = matches_played + 1,
            last_played = $2,
-           rust_accumulated = $3
+           rust_accumulated = $3,
+           lootboxes = lootboxes + 1
        WHERE id = $4`,
       [winnerNewRating, matchDate, winnerNewRust, winner.id]
     );
