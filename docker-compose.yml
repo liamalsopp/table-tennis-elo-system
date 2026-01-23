@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - tt-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tabletennis"]
       interval: 10s
@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "5172:8080"
     environment:
       - NODE_ENV=production
       - PORT=8080
@@ -55,5 +55,5 @@ services:
       start_period: 10s
 
 volumes:
-  postgres-data:
+  tt-postgres-data:
     driver: local
