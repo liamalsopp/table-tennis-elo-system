@@ -4,26 +4,6 @@ import Avatar from './Avatar';
 import './AvatarSelector.css';
 
 export default function AvatarSelector({ playerId, onSelect }) {
-  const { refreshData } = useApp();
-  const [ownedAvatars, setOwnedAvatars] = useState([]);
-  const [currentAvatar, setCurrentAvatar] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState(null);
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 
-    (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
-
-export default function AvatarSelector({ playerId, onSelect }) {
-  const { refreshData, players } = useApp();
-  const [ownedAvatars, setOwnedAvatars] = useState([]);
-  const [currentAvatar, setCurrentAvatar] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState(null);
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 
-    (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
-
-export default function AvatarSelector({ playerId, onSelect }) {
   const { refreshData, players, refreshTrigger } = useApp();
   const [ownedAvatars, setOwnedAvatars] = useState([]);
   const [currentAvatar, setCurrentAvatar] = useState(null);
