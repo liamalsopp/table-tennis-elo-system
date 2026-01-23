@@ -34,7 +34,7 @@ function App() {
             <span className="stat-label">Matches:</span>
             <span className="stat-value">{matches.length}</span>
           </div>
-        </div>
+      </div>
       </header>
 
       <nav className="tabs">
@@ -45,14 +45,14 @@ function App() {
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
-          </button>
+        </button>
         ))}
       </nav>
 
       <main className="main-content">
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </main>
-    </div>
+      </div>
   );
 }
 

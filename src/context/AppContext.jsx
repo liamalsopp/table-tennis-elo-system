@@ -10,7 +10,10 @@ export function useApp() {
   return context;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// In production, use relative URLs since React app is served from same server
+// In development, use the dev server URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3001/api');
 
 export function AppProvider({ children }) {
   const [players, setPlayers] = useState([]);

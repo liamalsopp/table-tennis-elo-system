@@ -29,7 +29,7 @@ export default function AddPlayer() {
     try {
       await addPlayer(name);
       setSuccess('Player added successfully!');
-      setName('');
+    setName('');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.message || 'Failed to add player');

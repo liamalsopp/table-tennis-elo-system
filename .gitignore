@@ -26,6 +26,8 @@ dist-ssr
 # Database
 server/database.sqlite
 server/database.sqlite-journal
+data/database.sqlite
+data/database.sqlite-journal
 /home/data/database.sqlite
 
 # Environment variables

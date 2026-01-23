@@ -1,5 +1,5 @@
 import express from 'express';
-import db from '../db.js';
+import { getDb } from '../db.js';
 import { calculateRatingChanges, decayRust } from '../utils/elo.js';
 
 const router = express.Router();
@@ -7,30 +7,31 @@ const router = express.Router();
 // Get all matches
 router.get('/', async (req, res) => {
   try {
-    const matches = await db.all(`
+    const db = getDb();
+    const result = await db.query(`
       SELECT 
         id,
-        player1_id as player1Id,
-        player2_id as player2Id,
-        player1_name as player1Name,
-        player2_name as player2Name,
-        player1_score as player1Score,
-        player2_score as player2Score,
-        player1_elo_before as player1ELOBefore,
-        player2_elo_before as player2ELOBefore,
-        player1_elo_after as player1ELOAfter,
-        player2_elo_after as player2ELOAfter,
-        player1_elo_change as player1ELOChange,
-        player2_elo_change as player2ELOChange,
-        player1_rust as player1Rust,
-        player2_rust as player2Rust,
-        player1_days_inactive as player1DaysInactive,
-        player2_days_inactive as player2DaysInactive,
-        created_at as createdAt
+        player1_id as "player1Id",
+        player2_id as "player2Id",
+        player1_name as "player1Name",
+        player2_name as "player2Name",
+        player1_score as "player1Score",
+        player2_score as "player2Score",
+        player1_elo_before as "player1ELOBefore",
+        player2_elo_before as "player2ELOBefore",
+        player1_elo_after as "player1ELOAfter",
+        player2_elo_after as "player2ELOAfter",
+        player1_elo_change as "player1ELOChange",
+        player2_elo_change as "player2ELOChange",
+        player1_rust as "player1Rust",
+        player2_rust as "player2Rust",
+        player1_days_inactive as "player1DaysInactive",
+        player2_days_inactive as "player2DaysInactive",
+        created_at as "createdAt"
       FROM matches
       ORDER BY created_at DESC
     `);
-    res.json(matches);
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching matches:', error);
     res.status(500).json({ error: 'Failed to fetch matches' });
@@ -40,6 +41,7 @@ router.get('/', async (req, res) => {
 // Add a new match
 router.post('/', async (req, res) => {
   try {
+    const db = getDb();
     const { player1Id, player2Id, player1Score, player2Score } = req.body;
 
     // Validation
@@ -63,12 +65,15 @@ router.post('/', async (req, res) => {
     }
 
     // Get players with all fields
-    const player1 = await db.get('SELECT * FROM players WHERE id = ?', [player1Id]);
-    const player2 = await db.get('SELECT * FROM players WHERE id = ?', [player2Id]);
+    const p1Result = await db.query('SELECT * FROM players WHERE id = $1', [player1Id]);
+    const p2Result = await db.query('SELECT * FROM players WHERE id = $1', [player2Id]);
 
-    if (!player1 || !player2) {
+    if (p1Result.rows.length === 0 || p2Result.rows.length === 0) {
       return res.status(404).json({ error: 'Player not found' });
     }
+
+    const player1 = p1Result.rows[0];
+    const player2 = p2Result.rows[0];
 
     // Determine winner
     const isPlayer1Winner = score1 > score2;
@@ -100,27 +105,27 @@ router.post('/', async (req, res) => {
 
     // Update winner
     const winnerNewRust = decayRust(changes.newWinnerRust);
-    await db.run(
+    await db.query(
       `UPDATE players 
-       SET elo = ?, 
+       SET elo = $1, 
            wins = wins + 1,
            matches_played = matches_played + 1,
-           last_played = ?,
-           rust_accumulated = ?
-       WHERE id = ?`,
+           last_played = $2,
+           rust_accumulated = $3
+       WHERE id = $4`,
       [winnerNewRating, matchDate, winnerNewRust, winner.id]
     );
 
     // Update loser
     const loserNewRust = decayRust(changes.newLoserRust);
-    await db.run(
+    await db.query(
       `UPDATE players 
-       SET elo = ?, 
+       SET elo = $1, 
            losses = losses + 1,
            matches_played = matches_played + 1,
-           last_played = ?,
-           rust_accumulated = ?
-       WHERE id = ?`,
+           last_played = $2,
+           rust_accumulated = $3
+       WHERE id = $4`,
       [loserNewRating, matchDate, loserNewRust, loser.id]
     );
 
@@ -128,7 +133,7 @@ router.post('/', async (req, res) => {
     const matchId = Date.now().toString();
 
     // Store match data with player1/player2 order preserved
-    await db.run(
+    await db.query(
       `INSERT INTO matches (
         id, player1_id, player2_id, player1_name, player2_name,
         player1_score, player2_score,
@@ -138,7 +143,7 @@ router.post('/', async (req, res) => {
         player1_rust, player2_rust,
         player1_days_inactive, player2_days_inactive,
         created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [
         matchId, player1Id, player2Id, player1.name, player2.name,
         score1, score2,
@@ -156,31 +161,31 @@ router.post('/', async (req, res) => {
     );
 
     // Return the created match
-    const match = await db.get(`
+    const matchResult = await db.query(`
       SELECT 
         id,
-        player1_id as player1Id,
-        player2_id as player2Id,
-        player1_name as player1Name,
-        player2_name as player2Name,
-        player1_score as player1Score,
-        player2_score as player2Score,
-        player1_elo_before as player1ELOBefore,
-        player2_elo_before as player2ELOBefore,
-        player1_elo_after as player1ELOAfter,
-        player2_elo_after as player2ELOAfter,
-        player1_elo_change as player1ELOChange,
-        player2_elo_change as player2ELOChange,
-        player1_rust as player1Rust,
-        player2_rust as player2Rust,
-        player1_days_inactive as player1DaysInactive,
-        player2_days_inactive as player2DaysInactive,
-        created_at as createdAt
+        player1_id as "player1Id",
+        player2_id as "player2Id",
+        player1_name as "player1Name",
+        player2_name as "player2Name",
+        player1_score as "player1Score",
+        player2_score as "player2Score",
+        player1_elo_before as "player1ELOBefore",
+        player2_elo_before as "player2ELOBefore",
+        player1_elo_after as "player1ELOAfter",
+        player2_elo_after as "player2ELOAfter",
+        player1_elo_change as "player1ELOChange",
+        player2_elo_change as "player2ELOChange",
+        player1_rust as "player1Rust",
+        player2_rust as "player2Rust",
+        player1_days_inactive as "player1DaysInactive",
+        player2_days_inactive as "player2DaysInactive",
+        created_at as "createdAt"
       FROM matches
-      WHERE id = ?
+      WHERE id = $1
     `, [matchId]);
 
-    res.status(201).json(match);
+    res.status(201).json(matchResult.rows[0]);
   } catch (error) {
     console.error('Error adding match:', error);
     res.status(500).json({ error: 'Failed to add match' });
@@ -190,20 +195,21 @@ router.post('/', async (req, res) => {
 // Delete a match
 router.delete('/:id', async (req, res) => {
   try {
+    const db = getDb();
     const { id } = req.params;
 
     // Get the match to delete
-    const match = await db.get('SELECT * FROM matches WHERE id = ?', [id]);
-    if (!match) {
+    const matchResult = await db.query('SELECT * FROM matches WHERE id = $1', [id]);
+    if (matchResult.rows.length === 0) {
       return res.status(404).json({ error: 'Match not found' });
     }
 
     // Delete the match
-    await db.run('DELETE FROM matches WHERE id = ?', [id]);
+    await db.query('DELETE FROM matches WHERE id = $1', [id]);
 
     // Recalculate all ELO ratings from scratch
     // Reset all players
-    await db.run(`
+    await db.query(`
       UPDATE players 
       SET elo = 1000.0, 
           wins = 0, 
@@ -214,14 +220,17 @@ router.delete('/:id', async (req, res) => {
     `);
 
     // Get all remaining matches in chronological order
-    const allMatches = await db.all('SELECT * FROM matches ORDER BY created_at ASC');
+    const allMatchesResult = await db.query('SELECT * FROM matches ORDER BY created_at ASC');
 
     // Replay all matches using the new algorithm
-    for (const m of allMatches) {
-      const p1 = await db.get('SELECT * FROM players WHERE id = ?', [m.player1_id]);
-      const p2 = await db.get('SELECT * FROM players WHERE id = ?', [m.player2_id]);
+    for (const m of allMatchesResult.rows) {
+      const p1Result = await db.query('SELECT * FROM players WHERE id = $1', [m.player1_id]);
+      const p2Result = await db.query('SELECT * FROM players WHERE id = $1', [m.player2_id]);
 
-      if (p1 && p2) {
+      if (p1Result.rows.length > 0 && p2Result.rows.length > 0) {
+        const p1 = p1Result.rows[0];
+        const p2 = p2Result.rows[0];
+        
         const isP1Winner = m.player1_score > m.player2_score;
         const winner = isP1Winner ? p1 : p2;
         const loser = isP1Winner ? p2 : p1;
@@ -248,26 +257,26 @@ router.delete('/:id', async (req, res) => {
         const loserNewRust = decayRust(changes.newLoserRust);
 
         // Update winner
-        await db.run(
+        await db.query(
           `UPDATE players 
-           SET elo = ?, 
+           SET elo = $1, 
                wins = wins + 1,
                matches_played = matches_played + 1,
-               last_played = ?,
-               rust_accumulated = ?
-           WHERE id = ?`,
+               last_played = $2,
+               rust_accumulated = $3
+           WHERE id = $4`,
           [winnerNewRating, m.created_at, winnerNewRust, winner.id]
         );
 
         // Update loser
-        await db.run(
+        await db.query(
           `UPDATE players 
-           SET elo = ?, 
+           SET elo = $1, 
                losses = losses + 1,
                matches_played = matches_played + 1,
-               last_played = ?,
-               rust_accumulated = ?
-           WHERE id = ?`,
+               last_played = $2,
+               rust_accumulated = $3
+           WHERE id = $4`,
           [loserNewRating, m.created_at, loserNewRust, loser.id]
         );
       }

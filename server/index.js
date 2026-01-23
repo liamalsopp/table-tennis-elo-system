@@ -2,9 +2,29 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { webcrypto } from 'crypto';
 import { initDatabase } from './db.js';
 import playersRouter from './routes/players.js';
 import matchesRouter from './routes/matches.js';
+
+// Ensure crypto is available globally for Azure SDK (required for @azure/storage-blob)
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = webcrypto;
+}
+
+// Import scheduler only if backups are explicitly enabled
+let schedulerModule = null;
+if (process.env.ENABLE_BACKUPS === 'true' && process.env.AZURE_STORAGE_CONNECTION_STRING) {
+  import('./scheduler.js')
+    .then((module) => {
+      schedulerModule = module;
+      console.log('Backup scheduler started');
+    })
+    .catch((error) => {
+      console.error('Failed to start backup scheduler:', error);
+      // Don't fail the app if scheduler fails to start
+    });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,8 +37,13 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // Initialize database
+  // Initialize database (connects to PostgreSQL)
   await initDatabase();
+
+  // Run startup backup after database is initialized
+  if (schedulerModule && schedulerModule.runStartupBackup) {
+    await schedulerModule.runStartupBackup();
+  }
 
   // API Routes
   app.use('/api/players', playersRouter);

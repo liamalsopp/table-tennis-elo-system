@@ -1,7 +1,7 @@
 import { useApp } from '../context/AppContext';
 
 export default function Leaderboard() {
-  const { players, deletePlayer } = useApp();
+  const { players } = useApp();
 
   if (players.length === 0) {
     return (
@@ -46,7 +46,6 @@ export default function Leaderboard() {
               <th>Losses</th>
               <th>Win Rate</th>
               <th>Matches</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -76,19 +75,6 @@ export default function Leaderboard() {
                 <td className="stat losses">{player.losses}</td>
                 <td className="stat">{getWinRate(player)}</td>
                 <td className="stat">{player.matchesPlayed}</td>
-                <td>
-                  <button
-                    className="btn btn-danger btn-small"
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete ${player.name}? This will also delete all their matches.`)) {
-                        deletePlayer(player.id);
-                      }
-                    }}
-                    title="Delete player"
-                  >
-                    🗑️
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>

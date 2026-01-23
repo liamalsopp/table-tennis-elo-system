@@ -1,26 +1,27 @@
 import express from 'express';
-import db from '../db.js';
+import { getDb } from '../db.js';
 
 const router = express.Router();
 
 // Get all players
 router.get('/', async (req, res) => {
   try {
-    const players = await db.all(`
+    const db = getDb();
+    const result = await db.query(`
       SELECT 
         id,
         name,
         elo,
         wins,
         losses,
-        matches_played as matchesPlayed,
-        last_played as lastPlayed,
-        rust_accumulated as rustAccumulated,
-        created_at as createdAt
+        matches_played as "matchesPlayed",
+        last_played as "lastPlayed",
+        rust_accumulated as "rustAccumulated",
+        created_at as "createdAt"
       FROM players
       ORDER BY elo DESC
     `);
-    res.json(players);
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching players:', error);
     res.status(500).json({ error: 'Failed to fetch players' });
@@ -30,6 +31,7 @@ router.get('/', async (req, res) => {
 // Add a new player
 router.post('/', async (req, res) => {
   try {
+    const db = getDb();
     const { name } = req.body;
     
     if (!name || !name.trim()) {
@@ -37,36 +39,36 @@ router.post('/', async (req, res) => {
     }
 
     // Check if player already exists
-    const existing = await db.get('SELECT id FROM players WHERE LOWER(name) = LOWER(?)', [name.trim()]);
-    if (existing) {
+    const existing = await db.query('SELECT id FROM players WHERE LOWER(name) = LOWER($1)', [name.trim()]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'A player with this name already exists' });
     }
 
     const id = Date.now().toString();
     const createdAt = new Date().toISOString();
 
-    await db.run(
+    await db.query(
       `INSERT INTO players (id, name, elo, wins, losses, matches_played, last_played, rust_accumulated, created_at)
-       VALUES (?, ?, 1000.0, 0, 0, 0, NULL, 1.0, ?)`,
+       VALUES ($1, $2, 1000.0, 0, 0, 0, NULL, 1.0, $3)`,
       [id, name.trim(), createdAt]
     );
 
-    const player = await db.get(`
+    const result = await db.query(`
       SELECT 
         id,
         name,
         elo,
         wins,
         losses,
-        matches_played as matchesPlayed,
-        last_played as lastPlayed,
-        rust_accumulated as rustAccumulated,
-        created_at as createdAt
+        matches_played as "matchesPlayed",
+        last_played as "lastPlayed",
+        rust_accumulated as "rustAccumulated",
+        created_at as "createdAt"
       FROM players
-      WHERE id = ?
+      WHERE id = $1
     `, [id]);
 
-    res.status(201).json(player);
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error adding player:', error);
     res.status(500).json({ error: 'Failed to add player' });
@@ -76,15 +78,16 @@ router.post('/', async (req, res) => {
 // Delete a player
 router.delete('/:id', async (req, res) => {
   try {
+    const db = getDb();
     const { id } = req.params;
 
-    // Delete all matches involving this player
-    await db.run('DELETE FROM matches WHERE player1_id = ? OR player2_id = ?', [id, id]);
+    // Delete all matches involving this player (CASCADE will handle this, but being explicit)
+    await db.query('DELETE FROM matches WHERE player1_id = $1 OR player2_id = $1', [id]);
 
     // Delete the player
-    const result = await db.run('DELETE FROM players WHERE id = ?', [id]);
+    const result = await db.query('DELETE FROM players WHERE id = $1', [id]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Player not found' });
     }
 

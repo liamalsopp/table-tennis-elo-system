@@ -1,7 +1,7 @@
 import { useApp } from '../context/AppContext';
 
 export default function MatchHistory() {
-  const { matches, deleteMatch } = useApp();
+  const { matches } = useApp();
 
   if (matches.length === 0) {
     return (
@@ -36,17 +36,6 @@ export default function MatchHistory() {
             <div key={match.id} className="match-card">
               <div className="match-header">
                 <span className="match-date">{formatDate(match.createdAt)}</span>
-                <button
-                  className="btn btn-danger btn-small"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this match? ELO ratings will be recalculated.')) {
-                      deleteMatch(match.id);
-                    }
-                  }}
-                  title="Delete match"
-                >
-                  🗑️
-                </button>
               </div>
               <div className="match-players">
                 <div className={`match-player ${player1Won ? 'winner' : ''}`}>

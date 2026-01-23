@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: table-tennis-postgres
+    environment:
+      POSTGRES_DB: tabletennis
+      POSTGRES_USER: tabletennis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tabletennis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   app:
     build:
       context: .
@@ -10,13 +28,32 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
-    volumes:
-      # Mount persistent storage for database
-      - ./data:/home/data
+      # PostgreSQL connection
+      - DATABASE_URL=postgresql://tabletennis:${POSTGRES_PASSWORD:-changeme}@postgres:5432/tabletennis
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tabletennis
+      - DB_USER=tabletennis
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      # Azure Blob Storage backup configuration (optional - disabled by default)
+      # Backups are optional since PostgreSQL data persists in Docker volumes
+      # Uncomment and configure to enable automated backups:
+      # - AZURE_STORAGE_CONNECTION_STRING=your-connection-string
+      # - AZURE_STORAGE_CONTAINER_NAME=table-tennis-backups
+      # - ENABLE_BACKUPS=true
+      # - CRON_SCHEDULE=0 2 * * *
+      # - BACKUP_ON_STARTUP=true
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 5s
+      start_period: 10s
+
+volumes:
+  postgres-data:
+    driver: local
