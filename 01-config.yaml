@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tt-secrets
+type: Opaque
+stringData:
+  # In a real scenario, never commit this file to git with real passwords!
+  postgres-password: "changeme" 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tt-config
+data:
+  POSTGRES_DB: "tabletennis"
+  POSTGRES_USER: "tabletennis"
+  DB_HOST: "postgres" # This will match the Service name we create later
+  DB_PORT: "5432"
+  NODE_ENV: "production"
