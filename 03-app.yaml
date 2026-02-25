@@ -19,12 +19,12 @@ spec:
     spec:
       containers:
       - name: table-tennis-app
-        image: youruser/table-tennis-elo:v1 # REPLACE THIS
+        image: table-tennis-elo-system-app:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080 #
         env:
-        - name: DATABASE_URL # Constructing the connection string
-          value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+        # Define the "ingredients" first
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -50,6 +50,9 @@ spec:
             configMapKeyRef:
               name: tt-config
               key: DB_PORT
+        # Now define DATABASE_URL last, so it can see the variables above
+        - name: DATABASE_URL
+          value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
         # Health checks using your existing logic
         readinessProbe:
           httpGet:
@@ -73,7 +76,7 @@ spec:
     app: table-tennis-app
   ports:
     - protocol: TCP
-      port: 80 # External port
+      port: 5173 # External port
       targetPort: 8080 # Internal container port
   type: LoadBalancer # Use 'ClusterIP' if you plan to use an Ingress Controller
 apiVersion: apps/v1

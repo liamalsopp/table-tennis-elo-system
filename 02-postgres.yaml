@@ -3,11 +3,12 @@ kind: Service
 metadata:
   name: postgres
 spec:
+  type: LoadBalancer
   ports:
   - port: 5432
+    targetPort: 5432
   selector:
     app: postgres
-  clusterIP: None # Headless service for StatefulSet stable discovery
 ---
 apiVersion: apps/v1
 kind: StatefulSet

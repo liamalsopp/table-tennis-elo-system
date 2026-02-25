@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: table-tennis-backup
+spec:
+  schedule: "0 * * * *" # Every hour
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: table-tennis:v1 #
+            imagePullPolicy: Never
+            # Mount the volume to a folder inside the container
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-volume
+            env:
+            - name: PGPASSWORD # pg_dump looks for this specific var automatically
+              valueFrom:
+                secretKeyRef:
+                  name: tt-secrets
+                  key: postgres-password
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: tt-config
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: tt-config
+                  key: POSTGRES_USER
+            # The Command: Dump to file -> Cleanup old files
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting Local Backup..."
+              # 1. Create filename with date (e.g., backup-20240101-120000.sql)
+              FILENAME=/backups/backup-$(date +%Y%m%d-%H%M%S).sql
+              
+              # 2. Run pg_dump (pg_client is already installed in your image)
+              pg_dump -h $DB_HOST -U $DB_USER -d tabletennis > $FILENAME
+              
+              echo "Saved to $FILENAME"
+              
+              # 3. Delete files older than 7 days
+              find /backups -name "*.sql" -mtime +7 -delete
+          
+          # Define the storage volume
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-storage
+              
+          restartPolicy: OnFailure
